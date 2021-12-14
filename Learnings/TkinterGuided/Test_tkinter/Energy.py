@@ -9,31 +9,39 @@ class energy():
         self.fed = 1
         self.health = 1
 
-    def energy_loss(self, seconds, health, workload):
-        self.health = health
-        self.energy -= (workload * seconds / health)
+    def eat(self, nutrition):
+        if self.fed<1:
+            try:
+                self.fed += int(nutrition)
+            except:
+                print("You must eat food with an inter nutrition value")
+        else:
+            print("You shouldnt eat food when you are full!")
+
+
+    def energy_loss(self, seconds, workload):
+        self.energy -= (workload * seconds / self.health)
+        print("Test")
 
         if self.energy < 0:
             if self.energy < -30: self.energy = -30
-            self.energy_low(self.health, self.fed)
+            self.energy_low()
         return self.energy
 
-    def energy_gain(self, seconds, healt, fed):
-        self.fed = fed
-        self.health = healt
-        self.energy += fed * seconds * healt
+    def energy_gain(self, seconds):
+        self.energy += self.fed * seconds * self.health
         if (self.energy >= self.max_energy):
             self.energy = self.max_energy
         return self.energy
 
-    def energy_low(self, health, fed):
+    def energy_low(self):
         if self.energy < 0:
             print("You drive your body too hard, the energy is running out!!")
             time.sleep(2)
             print("You pass out!")
             while self.energy <= 10:
                 time.sleep(5)
-                self.energy = self.energy_gain(5, health, fed)
+                self.energy = self.energy_gain(5)
                 if self.energy <= 10:
                     text = random.randint(1, 5)
                     if text == 1:
@@ -51,7 +59,7 @@ class energy():
                     if text == 5:
                         print("..............")
             print("You wake up, feeling not well")
-        if fed < 0 :
+        if self.fed < 0 :
             print("You pass out from hunger!")
             time.sleep(10)
             print("When you wake up you are weak and powerless, you need some nutrition quickly!\n"
