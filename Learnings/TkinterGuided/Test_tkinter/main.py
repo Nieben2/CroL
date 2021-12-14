@@ -12,7 +12,6 @@ skills = skills()
 
 
 class Window(tk.Tk):
-
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
@@ -81,8 +80,8 @@ class Window(tk.Tk):
             grid(column=0, row=4, pady=5, padx=5, sticky="ew")
 
         button_test = tk.Button(menuframe,
-                                     text="test",
-                                     command=lambda: self.show_frame("Inventory")). \
+                                     text="Hunting",
+                                     command=lambda: self.show_frame("Hunt")). \
             grid(column=0, row=5, pady=5, padx=5, sticky="ew")
 
         # the container is where we'll stack a bunch of frames
@@ -93,7 +92,7 @@ class Window(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        for F in (Homescreen, Character_screen, Skillscreen, Gather):
+        for F in (Homescreen, Character_screen, Skillscreen, Gather, Hunt):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame
@@ -175,43 +174,73 @@ class Gather(tk.Frame):
         self.controller = controller
         self.gather_progress = tk.IntVar()
         self.gather_result = tk.StringVar()
+        self.gather_stopflag = False
+        self.progressbar(100)
+
+        # FIXME Lägg titeln i en egen frame
         label = tk.Label(self, text="You venture forth into the wilds", font=controller.title_font)
-        label.grid(column=5, row=1, pady=5, sticky="ew")
+        label.grid(column=5, row=0, pady=5, sticky="ew")
         #self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(5, weight=1)
-        tk.Label(self, textvariable=self.gather_result).grid(column=2, row=4)
+        tk.Label(self, textvariable=self.gather_result).grid(column=1, row=5)
 
 
         tk.Button(self, text="Gather",
-                  command= lambda : self.threading()). \
+                  command= lambda : self.gather_start()). \
             grid(column=0, row=4, pady=5, padx=5, sticky="ew")
 
-    def progressbar(self):
+        tk.Button(self, text="Stop",
+                  command=lambda: self.gather_stop()). \
+            grid(column=0, row=5, pady=5, padx=5, sticky="ew")
+
+    def progressbar(self, time):
         self.gather_pb = ttk.Progressbar(self,
                         orient="horizontal",
                         mode='determinate',
                         length= 250,
+                        maximum= time,
                         variable=self.gather_progress).grid(column=1, row=4)
 
 
+    def gather_start(self):
+        if self.gather_stopflag:
+            pass
+        else:
+            self.gather_stopflag = True
+            self.gather_progress.set(0)
+            self.threading()
 
 
     def threading(self):
         def btn_gather_click():
-            self.progressbar()
-            self.gather_progress.set(0)
-            for i in range(100):
-                self.update_idletasks()
-                self.gather_progress.set(i+1)
-                self.after(10)
-                if self.gather_progress.get() >= 100:
-                    self.gather_result.set(skills.gathering(30))
-                    self.threading()
+            if self.gather_progress.get() == 0:
+                self.progressbar(100)
+                for i in range(100):
+                    if self.gather_stopflag:
+                        self.update_idletasks()
+                        self.gather_progress.set(i+1)
+                        self.after(10)
+                        if self.gather_progress.get() >= 100:
+                            self.gather_result.set(skills.gathering(30))
+                            self.gather_progress.set(0)
+                            self.threading()
+                    else: self.gather_progress.set(0)
 
         t = threading.Thread(None, btn_gather_click, ())
         t.start()
 
 
+    def gather_stop(self):
+        self.gather_stopflag = False
+
+
+class Hunt(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, borderwidth= 2, relief="ridge")
+        self.controller = controller
+        label = tk.Label(self, text="Hunting", font=controller.title_font)
+        label.pack(side="top", fill="x", pady=10)
 
 
 if __name__ == "__main__":
